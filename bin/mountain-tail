@@ -3,8 +3,11 @@
 import sys
 import time
 
+from sqlalchemy.sql import and_
+
 from mountain.rsyslog.models import SystemEvent
 from mountain.rsyslog.views import SYSLOG_FACILITY, SYSLOG_LEVEL
+from mountain.query.parser import QueryParser
 
 
 SEEN = []
@@ -30,32 +33,104 @@ def show(event):
 
 def tail(option):
     last = None
-    filters = []
+
+    if option.query:
+        filters = QueryParser(SystemEvent, 'message').parse(
+            u' '.join(option.query)
+        )
+    else:
+        filters = '1=1'
 
     if option.facility:
-        filters.append(SystemEvent.facility.in_(option.facility))
+        filters = and_(filters, SystemEvent.facility.in_(option.facility))
     if option.priority:
-        filters.append(SystemEvent.priority.in_(option.priority))
+        filters = and_(filters, SystemEvent.facility.in_(option.priority))
 
-    for event in SystemEvent.query.filter(*filters).order_by('receivedat DESC')[:option.lines]:
+    for event in SystemEvent.query.filter(filters).order_by('receivedat DESC')[:option.lines]:
         show(event)
         last = event.receivedat
 
     if option.follow:
         while True:
             time.sleep(option.sleep_interval)
-            for event in SystemEvent.query.filter(
-                SystemEvent.receivedat > last,
-                *filters
-                ):
+            tail_filters = and_(filters, SystemEvent.receivedat > last)
+            for event in SystemEvent.query.filter(tail_filters):
                 show(event)
                 last = event.receivedat
 
+def long_help():
+    print '''
+query language:
+
+  Search individual terms, or across the message:
+
+    test
+
+        Events that contain the word "test" in the message.
+
+    test message:
+
+        Events with "test" AND "message" in the message.
+
+    "test message":
+
+        Events that contain the phrase "test message" in the message.
+
+  Boolean operators:
+
+    test OR message:
+
+        Events that contain the words "test" or "message" in the message.
+
+    test NOT (foo OR bar):
+
+        Events that contain the word "test", but not "foo" or "bar" in the
+        message.
+
+  Field search:
+
+    facility:1
+    facility:kern
+    field:{match}
+
+        Events that are logged to the kernel facility.
+
+    facility:mail AND priority:warning
+
+        Events that are logged to the mail facility and have priority warning.
+
+  Inexact terms:
+
+    host:*.lab
+    field:{glob}
+
+        Events that are logged from hosts that end with ".lab".
+
+    message:test*user
+
+        Events that have a message that starts with "test" and ends with "user".
+
+  Ranges:
+
+    date:[2010-09-08 TO 2011-11-11]
+    field:{prefix TO suffix}
+
+        Events that are logged between 2010-09-08 and 2011-11-11 (inclusive).
+
+    date:[TO 2011-11-11]
+
+        Events that are logged up until 2011-11-11 (inclusive).
+
+    date:[2010-09-08 TO]
+
+        Events that are logged from 2010-09-08 (inclusive).
+'''
 
 def run():
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('-H', '--long-help', default=False, action='store_true')
     parser.add_argument('-f', '--follow', default=False, action='store_true')
     parser.add_argument('-n', '--lines', default=10, type=int)
     parser.add_argument('-s', '--sleep-interval', default=1, type=int)
@@ -65,14 +140,25 @@ def run():
     parser.add_argument('-P', '--priority', nargs='*',
         help='syslog levels (default: everything up to notice)'
     )
+    parser.add_argument('query', nargs='*',
+        help='search query (optional)'
+    )
 
     option = parser.parse_args()
+
+    if option.long_help:
+        parser.print_help()
+        long_help()
+        return
 
     # Defaults
     if not option.facility:
         option.facility = []
     if not option.priority:
-        option.priority = map(str, range(6))
+        if not option.query:
+            option.priority = map(str, range(6))
+        else:
+            option.priority = []
 
     # Parse facility (names)
     facility = set([])
