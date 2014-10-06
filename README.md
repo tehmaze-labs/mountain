@@ -2,15 +2,16 @@
 
 Syslog dashboard for rsyslog, based on Flask and PostgreSQL.
 
+
 # Tools
 
 There are both command line interface and web based tools available.
 
-## Command Line Interface
 
-### `mountain-tail`
+## Command Line Interface `mountain-tail`
 
-Works much like tail or multitail:
+Works much like [tail](http://linux.die.net/man/1/tail) or
+[multitail](http://linux.die.net/man/1/multitail):
 
     usage: mountain-tail [-h] [-f] [-n LINES] [-s SLEEP_INTERVAL]
                          [-F [FACILITY [FACILITY ...]]]
@@ -29,3 +30,8 @@ Works much like tail or multitail:
 Example:
 
 ![mountain-tail](docs/screenshot-tail.png "mountain-tail")
+
+
+## Web Interface `mountain-web`
+
+![mountain-web](docs/screenshot-web.png "mountain-web")
