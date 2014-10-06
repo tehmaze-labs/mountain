@@ -28,4 +28,4 @@ Works much like tail or multitail:
 
 Example:
 
-    ![mountain-tail](docs/screenshot-tail.png)
+![mountain-tail](docs/screenshot-tail.png "mountain-tail")
