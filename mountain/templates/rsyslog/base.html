@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Mountain :: Syslog{% endblock %}
+
+{% block styles %}
+{{ super() }}
+    <style type="text/css">
+    body {
+      padding-top:70px;
+    }
+
+    .navbar-header {
+      float: none;
+    }
+    .navbar-toggle {
+      display: block;
+    }
+    .navbar-collapse {
+      border-top: 1px solid transparent;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .navbar-collapse.collapse {
+      display: none!important;
+    }
+    .navbar-nav {
+      float: none!important;
+      margin: 7.5px -15px;
+    }
+    .navbar-nav>li {
+      float: none;
+    }
+    .navbar-nav>li>a {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    </style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-header">
+    <a class="navbar-brand" href="/">
+      <span class="glyphicon glyphicon-picture"></span>
+      Mountain
+    </a>
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+  </div>
+  <div class="navbar-collapse collapse">
+    <ul class="nav navbar-nav">
+      <li class="active"><a href="#">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="navbar-header navbar-right">
+      <p class="navbar-text">
+      <a href="#" class="navbar-link">Username</a>
+      </p>
+    </div>
+  </div>
+</nav>
+{% endblock %}

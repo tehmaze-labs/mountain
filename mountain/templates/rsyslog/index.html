@@ -1,0 +1,105 @@
+{% extends "rsyslog/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="row">
+  <div class="col2">
+    <form method="get" action="">
+      <div class="form-group">
+        <input class="form-control" type="text" name="_q" value="{{ query }}" placeholder="Search query &hellip;">
+      </div>
+{% if query_error %}
+      <div class="alert alert-warning alert-dismissible" role="alert">
+        There is an error in your query:
+        <blockquote>{{ query_error }}</blockquote>
+      </div>
+{% endif %}
+{% if 0 %}
+      <div class="checkbox">
+{%- for item in facility %}
+{%- set active = loop.index in current_facilities %}
+        <label class="facility{% if active %} facility-active{% endif %}">
+          <input type="checkbox" name="facility" value="{{ loop.index }}"
+    {%- if active %} checked="checked"{% endif %}>
+          {{ item }}
+        </label>
+  {%- if loop.index % 8 == 0 %}
+        <br>
+  {%- endif %}
+{%- endfor %}
+      </div>
+{% endif %}
+    </form>
+  </div>
+
+  <div class="col8">
+    <table class="table table-condensed">
+      <tr>
+        <th nowrap>Timestamp</th>
+        <th nowrap>Host</th>
+        <th>Message</th>
+        <th>Facility</th>
+      </tr>
+{%- for event in pager.items %}
+      <tr
+{%- if event.priority >= 8 %} class="error"
+{%- elif event.priority >= 6 %} class="warning"
+{%- else %} class="success"
+{%- endif %}>
+        <td>{{ event.receivedat }}</td>
+        <td><a href="?_q={{ query|urlencode }}+host:{{ event.fromhost|urlencode }}">{{ event.fromhost }}</a></td>
+        <td>{{ event.message|rsyslog_link }}</td>
+        <td><a href="?_q={{ query|urlencode }}+facility:{{ event.facility }}">{{ facility[event.facility] }}</a></td>
+      </tr>
+{%- endfor %}
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+    <style type="text/css">
+    label.facility {
+        display: inline-block;
+        width: 6em;
+    }
+
+    label.facility-active {
+        background-color: #dff0d8;
+    }
+
+    .table tbody tr > td.success {
+      background-color: #dff0d8 !important;
+    }
+
+    .table tbody tr > td.error {
+      background-color: #f2dede !important;
+    }
+
+    .table tbody tr > td.warning {
+      background-color: #fcf8e3 !important;
+    }
+
+    .table tbody tr > td.info {
+      background-color: #d9edf7 !important;
+    }
+
+    .table-hover tbody tr:hover > td.success {
+      background-color: #d0e9c6 !important;
+    }
+
+    .table-hover tbody tr:hover > td.error {
+      background-color: #ebcccc !important;
+    }
+
+    .table-hover tbody tr:hover > td.warning {
+      background-color: #faf2cc !important;
+    }
+
+    .table-hover tbody tr:hover > td.info {
+      background-color: #c4e3f3 !important;
+    }
+    </style>
+{% endblock %}

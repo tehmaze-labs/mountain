@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+
+import sys
+import time
+
+from mountain.rsyslog.models import SystemEvent
+from mountain.rsyslog.views import SYSLOG_FACILITY, SYSLOG_LEVEL
+
+
+SEEN = []
+
+
+def show(event):
+    if event.fromhost not in SEEN:
+        SEEN.append(event.fromhost)
+
+    color = 31 + (SEEN.index(event.fromhost) % 7)
+    line = '{date} {event.fromhost} [{facility}] {message}'.format(
+        color=color,
+        date=event.receivedat.strftime('%b %d %H:%M:%S'),
+        event=event,
+        facility=SYSLOG_FACILITY[event.facility],
+        message=event.message.strip(),
+    )
+    sys.stdout.write('\x1b[{color}m{line}\x1b[0m\n'.format(
+        color=color,
+        line=line,
+    ))
+
+
+def tail(option):
+    last = None
+    filters = []
+
+    if option.facility:
+        filters.append(SystemEvent.facility.in_(option.facility))
+    if option.priority:
+        filters.append(SystemEvent.priority.in_(option.priority))
+
+    for event in SystemEvent.query.filter(*filters).order_by('receivedat DESC')[:option.lines]:
+        show(event)
+        last = event.receivedat
+
+    if option.follow:
+        while True:
+            time.sleep(option.sleep_interval)
+            for event in SystemEvent.query.filter(
+                SystemEvent.receivedat > last,
+                *filters
+                ):
+                show(event)
+                last = event.receivedat
+
+
+def run():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--follow', default=False, action='store_true')
+    parser.add_argument('-n', '--lines', default=10, type=int)
+    parser.add_argument('-s', '--sleep-interval', default=1, type=int)
+    parser.add_argument('-F', '--facility', nargs='*',
+        help='syslog facilities (default: all facilities)'
+    )
+    parser.add_argument('-P', '--priority', nargs='*',
+        help='syslog levels (default: everything up to notice)'
+    )
+
+    option = parser.parse_args()
+
+    # Defaults
+    if not option.facility:
+        option.facility = []
+    if not option.priority:
+        option.priority = map(str, range(6))
+
+    # Parse facility (names)
+    facility = set([])
+    for item in option.facility:
+        if item.isdigit():
+            facility.add(int(item))
+        else:
+            facility.add(SYSLOG_FACILITY.index(item.lower()))
+    option.facility = facility
+
+    priority = set([])
+    for item in option.priority:
+        if item.isdigit():
+            priority.add(int(item))
+        else:
+            priority.add(SYSLOG_LEVEL.index(item.lower()))
+    option.priority = priority
+
+    tail(option)
+
+
+if __name__ == '__main__':
+    sys.exit(run())
