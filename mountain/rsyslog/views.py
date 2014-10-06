@@ -3,7 +3,7 @@ import re
 from flask import Blueprint, request, render_template
 import jinja2
 
-from .models import SystemEvent
+from .models import SystemEvent, SYSLOG_FACILITY, SYSLOG_LEVEL
 from mountain.app import app
 from mountain.query.parser import QueryParser, ParserError
 
@@ -11,12 +11,6 @@ from mountain.query.parser import QueryParser, ParserError
 mod_rsyslog = Blueprint('rsyslog', __name__)
 
 # Syslog specifics
-SYSLOG_FACILITY = (
-    'kern', 'user', 'mail', 'daemon', 'auth', 'syslog', 'lpr', 'news', 'uucp',
-    'clock', 'authpriv', 'ftp', 'ntp', 'log-audit', 'log-alert', 'cron',
-    'local0', 'local1', 'local2', 'local3', 'local4', 'local5', 'local6',
-    'local7',
-)
 SYSLOG_FACILITY_MAP = {facility: i for i, facility in enumerate(SYSLOG_FACILITY)}
 SYSLOG_FACILITY_DEFAULT = (
     SYSLOG_FACILITY.index('kern'),
@@ -25,16 +19,6 @@ SYSLOG_FACILITY_DEFAULT = (
     SYSLOG_FACILITY.index('auth'),
     SYSLOG_FACILITY.index('syslog'),
     SYSLOG_FACILITY.index('authpriv'),
-)
-SYSLOG_LEVEL = (
-    'emergency',        # 0       Emergency: system is unusable
-    'alert',            # 1       Alert: action must be taken immediately
-    'critical',         # 2       Critical: critical conditions
-    'error',            # 3       Error: error conditions
-    'warning',          # 4       Warning: warning conditions
-    'notice',           # 5       Notice: normal but significant condition
-    'informational',    # 6       Informational: informational messages
-    'debug',            # 7       Debug: debug-level messages
 )
 
 # Link filters

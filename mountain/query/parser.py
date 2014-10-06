@@ -60,11 +60,14 @@ def to_sqlalchemy(model, query):
                 sqltypes.SMALLINT,
             )):
             try:
-                return field == long(query.text)
+                return int(query.text) == field
             except ValueError:
-                raise ParserError(
-                    'Field {} must be an integer'.format(query.fieldname)
-                )
+                if hasattr(field, 'choices') and query.text in field.choices:
+                    return field.choices.index(query.text) == field
+                else:
+                    raise ParserError(
+                        'Field {} must be an integer'.format(query.fieldname)
+                    )
 
         else:
             return field.op('~')(query.text)
